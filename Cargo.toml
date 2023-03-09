@@ -2,9 +2,12 @@
 name = "study-rust"
 version = "0.1.0"
 edition = "2021"
-default-run = "8-6"
+default-run = "9-1"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 rand = "0.5.5"
+
+[profiles.release]
+painc = "abort"
