@@ -1,10 +1,7 @@
 // Result 枚举
-enum Result<T, E> {
-    Ok(T),
-    Err(E),
-}
 
-use std::fs::File;
+use std::fs::{File, OpenOptions};
+use std::io;
 use std::io::ErrorKind;
 
 fn main() {
@@ -17,10 +14,26 @@ fn main() {
     //     }
     // };
 
-    // let b = match f {
+    // 请帮我改正上面代码
+
+    // let c = match &f {
+    //     Ok(file) => file,
+    //     Err(error) => {
+    //         if error.kind() == ErrorKind::NotFound {
+    //             match File::create("hello.txt") {
+    //                 Ok(fc) => fc,
+    //                 Err(e) => panic!("Tried to create file but there was a problem: {:?}", e),
+    //             }
+    //         } else {
+    //             panic!("There was a problem opening the file: {:?}", error);
+    //         }
+    //     };
+    // };
+
+    // let b = match &f {
     //     Ok(file) => file,
     //     Err(error) => match error.kind() {
-    //         ErrorKind::NotFound => match File::create("hello.txt") {
+    //         ErrorKind::NotFound => match &File::create("hello.txt") {
     //             Ok(fc) => fc,
     //             Err(e) => panic!("Tried to create file but there was a problem: {:?}", e),
     //         },
