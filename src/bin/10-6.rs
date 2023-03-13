@@ -17,9 +17,6 @@ fn main() {
     println!("The longest string is {}", result);
 }
 
-// 悬垂引用：指向已经被丢弃的值的引用
-// 如果想让函数里的变量在函数外也能使用，就需要把所有权转移出去
 fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
-    let result = String::from("really long string");
-    result.as_str()
+    x
 }
