@@ -1,5 +1,6 @@
 // 按名称运行测试
 // 通过 cargo test test_name 来运行指定的测试
+// 可以这么使用 `cargo test --bin <binary_file_name> <test_function_name>`
 
 pub fn add_two(a: i32) -> i32 {
     a + 2
