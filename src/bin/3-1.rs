@@ -3,6 +3,8 @@
 // 常量的命名习惯是全部大写，用下划线分隔单词
 // 常量可以在任何作用域中声明，包括全局作用域
 // 常量必须声明类型
+
+// cargo run --bin 3-1  来运行此 binary crate
 const MAX_POINTS: u32 = 100_000;
 
 fn main() {
