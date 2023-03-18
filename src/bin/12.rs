@@ -12,13 +12,13 @@ fn main() {
     println!("{:?}", args);
 
     let config = Config::new(&args).unwrap_or_else(|err| {
-        println!("Problem parsing arguments: {}", err);
+        eprintln!("Problem parsing arguments: {}", err);
         process::exit(1);
     });
 
     // 模式匹配用法
     if let Err(e) = study_rust::run(config) {
-        println!("Application error: {}", e);
+        eprintln!("Application error: {}", e);
         process::exit(1);
     }
 }
