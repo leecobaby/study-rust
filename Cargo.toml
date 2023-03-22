@@ -9,5 +9,9 @@ default-run = "11-10"
 [dependencies]
 rand = "0.5.5"
 
+[profiles.dev]
+opt-level = 0
+
 [profiles.release]
 painc = "abort"
+opt-level = 3
