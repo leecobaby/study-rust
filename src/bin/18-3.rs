@@ -71,6 +71,7 @@ fn main() {
         Message::ChangeColor(r, g, b) => {
             println!("Change the color to red {}, green {}, and blue {}", r, g, b);
         }
+        _ => (),
     }
 
     let msg = Message1::ChangeColor(Color::Hsv(0, 160, 255));
@@ -139,11 +140,13 @@ fn main() {
         None => (),
     }
 
-    let msg = Message::Hello { id: 5 }
+    let msg = Message::Hello { id: 5 };
 
     match msg {
         // match 守卫
-        Message::Hello { id: id_variable @ 3..=7 } => {
+        Message::Hello {
+            id: id_variable @ 3..=7,
+        } => {
             println!("Found an id in range: {}", id_variable)
         }
         Message::Hello { id: 10..=12 } => {
