@@ -30,18 +30,19 @@ fn main() {
     //     };
     // };
 
-    // let b = match &f {
-    //     Ok(file) => file,
-    //     Err(error) => match error.kind() {
-    //         ErrorKind::NotFound => match &File::create("hello.txt") {
-    //             Ok(fc) => fc,
-    //             Err(e) => panic!("Tried to create file but there was a problem: {:?}", e),
-    //         },
-    //         other_error => {
-    //             panic!("There was a problem opening the file: {:?}", other_error)
-    //         }
-    //     },
-    // };
+    let b = match &f {
+        Ok(file) => file,
+        Err(error) => match error.kind() {
+            // TODO: 局部作用域的借用会出错
+            ErrorKind::NotFound => match &File::create("hello.txt") {
+                Ok(fc) => fc,
+                Err(e) => panic!("Tried to create file but there was a problem: {:?}", e),
+            },
+            other_error => {
+                panic!("There was a problem opening the file: {:?}", other_error)
+            }
+        },
+    };
 
     // 匹配不同的错误
     // match 很有用，但是有时候太长了，可以使用 if let 语法
