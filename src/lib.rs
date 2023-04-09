@@ -1,117 +1,69 @@
-use std::{env, error::Error, fs};
+use std::sync::{mpsc, Arc, Mutex};
+use std::thread;
 
-// 在不同的场景下返回不同的错误类型
-pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    println!("Searching for {}", config.query);
-    println!("In file {}\n", config.filename);
-
-    let contents =
-    // ? 运算符会返回错误值给调用者
-        fs::read_to_string(config.filename)?;
-    let results = if config.case_sensitive {
-        search(&config.query, &contents)
-    } else {
-        search_case_sensitive(&config.query, &contents)
-    };
-
-    for line in results {
-        println!("{}", line);
-    }
-    Ok(())
+pub struct ThreadPool {
+    workers: Vec<Worker>,
+    sender: mpsc::Sender<Job>,
 }
 
-// 12-3 二进制程序分离指导性原则
-// 将从程序拆分为 main.rs 和 lib.rs，将业务逻辑放入 lib.rs
-pub struct Config {
-    pub query: String,
-    pub filename: String,
-    pub case_sensitive: bool,
-}
+impl ThreadPool {
+    /// Create a new ThreadPool.
+    ///
+    /// The size is the number of threads in the pool.
+    ///
+    /// # Panics
+    ///
+    /// The `new` function will panic if the size is zero.
+    pub fn new(size: usize) -> ThreadPool {
+        assert!(size > 0);
+        let (sender, receiver) = mpsc::channel();
+        let receiver = Arc::new(Mutex::new(receiver));
+        let mut workers = Vec::with_capacity(size);
 
-impl Config {
-    pub fn new(mut args: std::env::Args) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            return Err("not enough arguments");
+        for id in 0..size {
+            workers.push(Worker::new(id, Arc::clone(&receiver)));
         }
-        args.next();
 
-        let query = match args.next() {
-            Some(arg) => arg,
-            None => return Err("Didn't get a query string"),
-        };
-        let filename = match args.next() {
-            Some(arg) => arg,
-            None => return Err("Didn't get a file name"),
-        };
-        let case_sensitive = env::var("CASE_INSENSITIVE").is_err();
+        ThreadPool { workers, sender }
+    }
 
-        Ok(Config {
-            query,
-            filename,
-            case_sensitive,
-        })
+    pub fn execute<F>(&self, f: F)
+    where
+        F: FnOnce() + Send + 'static,
+    {
+        let job = Box::new(f);
+        self.sender.send(job).unwrap();
     }
 }
 
-pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    // let mut results = Vec::new();
-
-    // for line in contents.lines() {
-    //     if line.contains(query) {
-    //         results.push(line);
-    //     }
-    // }
-
-    // results
-
-    contents
-        .lines()
-        .filter(|line| line.contains(query))
-        .collect()
+struct Worker {
+    id: usize,
+    thread: thread::JoinHandle<()>,
 }
 
-pub fn search_case_sensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    let mut results = Vec::new();
-    let query = query.to_lowercase();
-
-    for line in contents.lines() {
-        if line.to_lowercase().contains(&query) {
-            results.push(line);
-        }
-    }
-
-    results
+trait FnBox {
+    fn call_box(self: Box<Self>);
 }
 
-// TDD 测试驱动开发
-// 测试指令: cargo test --lib
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn one_result() {
-        let query = "duct";
-        let contents = "\
-Rust:
-safe, fast, productive.
-Pick three.";
-
-        assert_eq!(vec!["safe, fast, productive."], search(query, contents));
+impl<F: FnOnce()> FnBox for F {
+    fn call_box(self: Box<F>) {
+        (*self)()
     }
+}
 
-    #[test]
-    fn case_sensitive() {
-        let query = "rust";
-        let contents = "\
-Rust:
-safe, fast, productive.
-Pick three.
-Trust tape.";
+type Job = Box<dyn FnBox + Send + 'static>;
 
-        assert_eq!(
-            vec!["Rust:", "Trust tape."],
-            search_case_sensitive(query, contents)
-        );
+impl Worker {
+    fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Job>>>) -> Worker {
+        let thread = thread::spawn(move || loop {
+            while let Ok(job) = receiver.lock().unwrap().recv() {
+                println!("Worker {} got a job; executing.", id);
+
+                // (*job)();
+                job.call_box();
+            }
+        });
+
+        Worker { id, thread }
     }
 }
